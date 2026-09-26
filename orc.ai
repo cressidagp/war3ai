@@ -8,6 +8,8 @@ globals
 
     boolean b_hero1_done        = false
     boolean b_hero2_done        = false
+	boolean b_hero3_done        = false
+	boolean b_hero4_done        = false
     boolean b_ensnare           = false
 
     integer c_altar_done        = 0
@@ -34,6 +36,7 @@ globals
     integer c_hero1_done        = 0
     integer c_hero2_done        = 0
     integer c_hero3_done        = 0
+	integer c_hero4_done        = 0
     integer c_hunter            = 0
     integer c_hunter_done       = 0
     integer c_kodo              = 0
@@ -60,67 +63,91 @@ endglobals
 //--------------------------------------------------------------------------------------------------
 //  set_skills
 //--------------------------------------------------------------------------------------------------
-function set_skills takes nothing returns nothing
+function AIHeroLevelUpFunction takes nothing returns integer
 
-    set skill[ 1] = MIRROR_IMAGE
-    set skill[ 2] = CRITICAL_STRIKE
-    set skill[ 3] = WIND_WALK
-    set skill[ 4] = MIRROR_IMAGE
-    set skill[ 5] = MIRROR_IMAGE
-    set skill[ 6] = BLADE_STORM
-    set skill[ 7] = CRITICAL_STRIKE
-    set skill[ 8] = CRITICAL_STRIKE
-    set skill[ 9] = WIND_WALK
-    set skill[10] = WIND_WALK
+	local integer g_at = 0
+    local integer g_size = 0
+    local unit u = null
+    local group g = CreateGroup()
+    local integer HeroLevel = GetHeroLevelAI()
+    local integer HeroId = GetHeroId()
+    local integer HeroSkill = 0
+    local integer array HeroSkillO
 
-    call SetSkillArray(1,BLADE_MASTER)
-    call SetSkillArray(2,BLADE_MASTER)
-    call SetSkillArray(3,BLADE_MASTER)
+	//check which hero type leveled up
+    if HeroId == BLADE_MASTER then
+        set HeroSkillO[1] = MIRROR_IMAGE
+        set HeroSkillO[2] = CRITICAL_STRIKE
+        set HeroSkillO[3] = WIND_WALK
+        set HeroSkillO[4] = MIRROR_IMAGE
+        set HeroSkillO[5] = MIRROR_IMAGE
+        set HeroSkillO[6] = BLADE_STORM
+        set HeroSkillO[7] = CRITICAL_STRIKE
+        set HeroSkillO[8] = CRITICAL_STRIKE
+        set HeroSkillO[9] = WIND_WALK
+        set HeroSkillO[10] = WIND_WALK
+    elseif HeroId == FAR_SEER then
+        set HeroSkillO[1] = CHAIN_LIGHTNING
+        set HeroSkillO[2] = SPIRIT_WOLF
+        set HeroSkillO[3] = CHAIN_LIGHTNING
+        set HeroSkillO[4] = SPIRIT_WOLF
+        set HeroSkillO[5] = CHAIN_LIGHTNING
+        set HeroSkillO[6] = EARTHQUAKE
+        set HeroSkillO[7] = SPIRIT_WOLF
+        set HeroSkillO[8] = FAR_SIGHT
+        set HeroSkillO[9] = FAR_SIGHT
+        set HeroSkillO[10] = FAR_SIGHT
+	elseif HeroId == TAUREN_CHIEF then
+        set HeroSkillO[1] = SHOCKWAVE
+        set HeroSkillO[2] = ENDURANE_AURA
+        set HeroSkillO[3] = SHOCKWAVE
+        set HeroSkillO[4] = ENDURANE_AURA
+        set HeroSkillO[5] = SHOCKWAVE
+        set HeroSkillO[6] = REINCARNATION
+        set HeroSkillO[7] = ENDURANE_AURA
+        set HeroSkillO[8] = WAR_STOMP
+        set HeroSkillO[9] = WAR_STOMP
+        set HeroSkillO[10] = WAR_STOMP
+	elseif HeroId == SHADOW_HUNTER then
+        set HeroSkillO[1] = HEALING_WAVE
+        set HeroSkillO[2] = SERPENT_WARD
+        set HeroSkillO[3] = HEALING_WAVE
+        set HeroSkillO[4] = SERPENT_WARD
+        set HeroSkillO[5] = HEALING_WAVE
+        set HeroSkillO[6] = VOODOO
+        set HeroSkillO[7] = SERPENT_WARD
+        set HeroSkillO[8] = HEX
+        set HeroSkillO[9] = HEX
+        set HeroSkillO[10] = HEX
+    endif
 
-    set skill[ 1] = CHAIN_LIGHTNING
-    set skill[ 2] = SPIRIT_WOLF
-    set skill[ 3] = CHAIN_LIGHTNING
-    set skill[ 4] = SPIRIT_WOLF
-    set skill[ 5] = CHAIN_LIGHTNING
-    set skill[ 6] = EARTHQUAKE
-    set skill[ 7] = SPIRIT_WOLF
-    set skill[ 8] = FAR_SIGHT
-    set skill[ 9] = FAR_SIGHT
-    set skill[10] = FAR_SIGHT
+	//cycle through all units of our ai
+    call GroupEnumUnitsOfPlayer(g, ai_player, null)
+    set g_size = BlzGroupGetSize(g)
+    loop
+        exitwhen g_at >= g_size
+        set u = BlzGroupUnitAt(g, g_at)
+        
+        //is not actually used anywhere so you can just delete this
+        if HeroLevel > max_hero_level then
+            set max_hero_level = HeroLevel
+        endif
 
-    call SetSkillArray(1,FAR_SEER)
-    call SetSkillArray(2,FAR_SEER)
-    call SetSkillArray(3,FAR_SEER)
+        //spend our dude's point on a skill
+        set HeroSkill = HeroSkillO[HeroLevel]
+        if HeroSkill > 0 then
+            call SelectHeroSkill(u, HeroSkill)
+        endif
 
-    set skill[ 1] = SHOCKWAVE
-    set skill[ 2] = ENDURANE_AURA
-    set skill[ 3] = SHOCKWAVE
-    set skill[ 4] = ENDURANE_AURA
-    set skill[ 5] = SHOCKWAVE
-    set skill[ 6] = REINCARNATION
-    set skill[ 7] = ENDURANE_AURA
-    set skill[ 8] = WAR_STOMP
-    set skill[ 9] = WAR_STOMP
-    set skill[10] = WAR_STOMP
+        set g_at = g_at + 1
+    endloop
+    call DestroyGroup(g)
+    set g = null
+    set u = null
 
-    call SetSkillArray(1,TAUREN_CHIEF)
-    call SetSkillArray(2,TAUREN_CHIEF)
-    call SetSkillArray(3,TAUREN_CHIEF)
+    //just in case but you can safely set it to 0 or remove it and set function's type to nothing
+    return HeroSkill
 
-    set skill[ 1] = HEALING_WAVE
-    set skill[ 2] = SERPENT_WARD
-    set skill[ 3] = HEALING_WAVE
-    set skill[ 4] = SERPENT_WARD
-    set skill[ 5] = HEALING_WAVE
-    set skill[ 6] = VOODOO
-    set skill[ 7] = SERPENT_WARD
-    set skill[ 8] = HEX
-    set skill[ 9] = HEX
-    set skill[10] = HEX
-
-    call SetSkillArray(1,SHADOW_HUNTER)
-    call SetSkillArray(2,SHADOW_HUNTER)
-    call SetSkillArray(3,SHADOW_HUNTER)
 endfunction
 
 //--------------------------------------------------------------------------------------------------
@@ -133,6 +160,7 @@ function setup_force takes nothing returns nothing
     call SetMeleeGroup( hero_id         )
     call SetMeleeGroup( hero_id2        )
     call SetMeleeGroup( hero_id3        )
+	call SetMeleeGroup( hero_id4        )
     call SetMeleeGroup( GRUNT           )
     call SetMeleeGroup( RAIDER          )
     call SetMeleeGroup( TAUREN          )
@@ -220,6 +248,8 @@ function init_vars takes nothing returns nothing
 
     set b_hero1_done        = GetUnitCountDone(hero_id) >= 1
     set b_hero2_done        = GetUnitCountDone(hero_id2) >= 1
+	set b_hero3_done        = GetUnitCountDone(hero_id3) >= 1
+	set b_hero4_done        = GetUnitCountDone(hero_id4) >= 1
     set b_ensnare           = GetUpgradeLevel(UPG_ORC_ENSNARE) >= 1
 
     set c_altar_done        = GetUnitCountDone(ORC_ALTAR)
@@ -246,6 +276,7 @@ function init_vars takes nothing returns nothing
     set c_hero1_done        = GetUnitCountDone(hero_id)
     set c_hero2_done        = GetUnitCountDone(hero_id2)
     set c_hero3_done        = GetUnitCountDone(hero_id3)
+	set c_hero4_done        = GetUnitCountDone(hero_id4)
     set c_hunter_done       = TownCountDone(HEAD_HUNTER)
     set c_kodo              = GetUnitCount(KODO_BEAST)
     set c_kodo_done         = GetUnitCountDone(KODO_BEAST)
@@ -492,7 +523,16 @@ function build_sequence takes nothing returns nothing
     //
     if c_altar_done >= 1 then
         if b_hero1_done and MeleeDifficulty() != MELEE_NEWBIE then
-            call SetBuildUnit( 1, hero_id2 )
+			if b_hero2_done then
+				if b_hero3_done or c_fortress_done >= 1 then
+					call SetBuildUnit( 1, hero_id3 )
+				endif
+				if b_hero4_done or c_fortress_done >= 1 then
+						call SetBuildUnit( 1, hero_id4 )
+				endif
+			else
+				call SetBuildUnit( 1, hero_id2 )
+			endif
         else
             call SetBuildUnit( 1, hero_id )
         endif
@@ -646,8 +686,7 @@ endfunction
 //--------------------------------------------------------------------------------------------------
 function main takes nothing returns nothing
     call PickMeleeHero(RACE_ORC)
-    call set_skills()
-    call StandardAI(function SkillArrays, function peon_assignment, function attack_sequence)
+	call StandardAI(function AIHeroLevelUpFunction, function peon_assignment, function attack_sequence)
     call StartThread(function set_vars)
     call PlayGame()
 endfunction
